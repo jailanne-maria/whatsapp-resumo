@@ -103,11 +103,13 @@ function resumirGrupo(nomeGrupo, mensagens, periodo) {
     }
   }
 
-  // Links
+  // Links (com quem compartilhou)
   const links = [];
   for (const m of mensagens) {
     const matches = textoDe(m).match(REGEX_LINK);
-    if (matches) links.push(...matches);
+    if (matches) {
+      for (const l of matches) links.push({ link: l, remetente: m.remetente || 'Desconhecido' });
+    }
   }
 
   // Mídias
@@ -146,7 +148,14 @@ function resumirGrupo(nomeGrupo, mensagens, periodo) {
 
   if (links.length) {
     linhas.push(`🔗 Links compartilhados (${links.length})`);
-    for (const l of [...new Set(links)].slice(0, 5)) linhas.push(`   ${l}`);
+    const vistos = new Set();
+    let cont = 0;
+    for (const { link, remetente } of links) {
+      if (vistos.has(link)) continue;
+      vistos.add(link);
+      linhas.push(`   • ${remetente}: ${link}`);
+      if (++cont >= 5) break;
+    }
     linhas.push('');
   }
 

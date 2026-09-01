@@ -1,4 +1,4 @@
-const {
+﻿const {
   default: makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
@@ -13,16 +13,24 @@ const config = require('./config');
 const store = require('./store');
 const { resumirGrupo } = require('./resumidor');
 
-// Trava de instância única: impede duas cópias do bot ao mesmo tempo
+// Log em arquivo para depuraÃ§Ã£o
+const LOGFILE = 'bot.log';
+function log(msg) {
+  const linha = `[${new Date().toISOString()}] ${msg}`;
+  console.log(linha);
+  try { fs.appendFileSync(LOGFILE, linha + '\n'); } catch {}
+}
+
+// Trava de instÃ¢ncia Ãºnica: impede duas cÃ³pias do bot ao mesmo tempo
 const LOCKFILE = 'bot.lock';
 try {
   const fd = fs.openSync(LOCKFILE, 'wx');
   fs.writeFileSync(fd, String(process.pid));
   fs.closeSync(fd);
 } catch {
-  console.log('⚠️  Já existe outra janela do bot aberta.');
+  console.log('âš ï¸  JÃ¡ existe outra janela do bot aberta.');
   console.log('   Feche a outra janela (ou pressione Ctrl+C nela) e rode este de novo.');
-  console.log('   Se a outra já foi fechada, apague o arquivo "bot.lock" desta pasta.');
+  console.log('   Se a outra jÃ¡ foi fechada, apague o arquivo "bot.lock" desta pasta.');
   process.exit(1);
 }
 process.on('exit', () => { try { fs.unlinkSync(LOCKFILE); } catch {} });
@@ -41,10 +49,10 @@ function formatarPeriodo(inicio, fim) {
   const i = new Date(inicio);
   const f = new Date(fim);
   const dia = f.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
-  return `${dia} ${formatarHora(i)} → ${formatarHora(f)}`;
+  return `${dia} ${formatarHora(i)} â†’ ${formatarHora(f)}`;
 }
 
-// Extrai o texto útil de uma mensagem do WhatsApp
+// Extrai o texto Ãºtil de uma mensagem do WhatsApp
 function extrairTexto(msg) {
   const m = msg.message || {};
   if (m.conversation) return m.conversation;
@@ -71,14 +79,14 @@ function nomeDoRemetente(msg, key) {
   return p.split('@')[0] || 'Desconhecido';
 }
 
-// Jid da própria conta (para "Mensagens salvas")
+// Jid da prÃ³pria conta (para "Mensagens salvas")
 function jidProprio() {
   const id = sock && sock.user && sock.user.id;
   if (!id) return null;
   return id.replace(/:[^@]+@/, '@');
 }
 
-// ---------- Persistência ----------
+// ---------- PersistÃªncia ----------
 
 function estadoAtual() {
   return store.carregar(config.arquivoDados);
@@ -106,14 +114,14 @@ function registrarMensagem(estado, jid, nomeGrupo, msg) {
   };
 
   if (m.reactionMessage) {
-    // mensagem de reação: anexa a reação à mensagem referenciada
+    // mensagem de reaÃ§Ã£o: anexa a reaÃ§Ã£o Ã  mensagem referenciada
     const refId = m.reactionMessage.key && m.reactionMessage.key.id;
     const reacao = m.reactionMessage.text;
     const alvo = grupo.mensagens.find((x) => x.id === refId);
     if (alvo && reacao && !alvo.reacoes.includes(reacao)) {
       alvo.reacoes.push(reacao);
     }
-    return; // não guarda a reação como mensagem própria
+    return; // nÃ£o guarda a reaÃ§Ã£o como mensagem prÃ³pria
   }
 
   if (!registro.texto && !registro.midia) return;
@@ -130,7 +138,7 @@ async function enviarResumos(estado, marco) {
   if (!sock) return;
   const destino = jidProprio();
   if (!destino) {
-    console.log('⚠️  Ainda sem jid próprio, resumo adiado.');
+    console.log('âš ï¸  Ainda sem jid prÃ³prio, resumo adiado.');
     return;
   }
 
@@ -151,14 +159,22 @@ async function enviarResumos(estado, marco) {
   }
 
   if (!blocos.length) {
-    console.log('Nenhum resumo gerado (sem atividade).');
+    log('Nenhum resumo gerado (sem atividade). Enviando confirmaÃ§Ã£o.');
+    try {
+      await sock.sendMessage(destino, {
+        text: 'ðŸ§  *RESUMO*\n\nNenhuma atividade registrada nos grupos ainda. O bot estÃ¡ ouvindo! âœ…\n\nMande "resumo" a qualquer momento para ver o que foi capturado.',
+      });
+      log('ConfirmaÃ§Ã£o enviada para Mensagens salvas.');
+    } catch (e) {
+      console.error('Falha ao enviar confirmaÃ§Ã£o:', e.message);
+    }
     return;
   }
 
-  const texto = `🧠 *RESUMO DOS GRUPOS*\n\n` + blocos.join('\n\n————————————\n\n');
+  const texto = `ðŸ§  *RESUMO DOS GRUPOS*\n\n` + blocos.join('\n\nâ€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”\n\n');
   try {
     await sock.sendMessage(destino, { text: texto });
-    console.log(`📨 Resumo enviado (${blocos.length} grupo(s)) às ${formatarHora(Date.now())}`);
+    log(`ðŸ“¨ Resumo enviado (${blocos.length} grupo(s)) Ã s ${formatarHora(Date.now())}`);
   } catch (e) {
     console.error('Falha ao enviar resumo:', e.message);
   }
@@ -184,7 +200,7 @@ function agendar() {
         const chave = keyDiaHora();
         if (!resumosJaEnviados.has(chave)) {
           resumosJaEnviados.add(chave);
-          console.log(`⏰ Hora do resumo (${h.hora}:${String(h.minuto).padStart(2, '0')})`);
+          console.log(`â° Hora do resumo (${h.hora}:${String(h.minuto).padStart(2, '0')})`);
           const estado = estadoAtual();
           enviarResumos(estado, estado.ultimoResumo || Date.now()).then(() => {
             estado.ultimoResumo = Date.now();
@@ -196,9 +212,28 @@ function agendar() {
   }, 30 * 1000);
 }
 
-// ---------- Conexão ----------
+// ---------- ConexÃ£o ----------
 
 let conectando = false;
+
+// Busca o nome de todos os grupos ao conectar
+async function carregarNomesGrupos() {
+  try {
+    const metas = await sock.groupFetchAllParticipating();
+    for (const [jid, meta] of Object.entries(metas)) {
+      if (meta.subject) {
+        nomesGrupos[jid] = meta.subject;
+        const e = estadoAtual();
+        if (e.grupos[jid]) e.grupos[jid].nome = meta.subject;
+        salvarEstado(e);
+      }
+    }
+    log(`📚 Nomes de ${Object.keys(metas).length} grupo(s) carregados.`);
+  } catch (e) {
+    log(`⚠️ Falha ao carregar nomes de grupos: ${e.message}`);
+  }
+}
+
 
 async function iniciar() {
   if (conectando) return;
@@ -221,9 +256,9 @@ async function iniciar() {
     sock.ev.on('connection.update', (update) => {
       const { connection, lastDisconnect, qr } = update;
       if (qr) {
-        console.log('📱 Escaneie o QR Code com seu WhatsApp:');
+        console.log('ðŸ“± Escaneie o QR Code com seu WhatsApp:');
         console.log('   1. Abra o WhatsApp no celular');
-        console.log('   2. Toque em ⋮ (ou ⚙️) > Aparelhos conectados');
+        console.log('   2. Toque em â‹® (ou âš™ï¸) > Aparelhos conectados');
         console.log('   3. "Conectar um aparelho" > escaneie o QR abaixo:');
         console.log('');
         qrcode.generate(qr, { small: true });
@@ -233,13 +268,14 @@ async function iniciar() {
         conectando = false;
         const statusCode = lastDisconnect?.error?.output?.statusCode;
         const reconectar = statusCode !== DisconnectReason.loggedOut;
-        console.log(`Conexão fechada (${statusCode}). ${reconectar ? 'Reconectando em 5s...' : 'Logado fora.'}`);
+        console.log(`ConexÃ£o fechada (${statusCode}). ${reconectar ? 'Reconectando em 5s...' : 'Logado fora.'}`);
         if (reconectar) {
           setTimeout(() => iniciar(), 5000);
         }
       } else if (connection === 'open') {
-        console.log('✅ Conectado! Os resumos irão para "Mensagens salvas".');
+        console.log('âœ… Conectado! Os resumos irÃ£o para "Mensagens salvas".');
         console.log(`   Jid: ${jidProprio()}`);
+        carregarNomesGrupos();
         agendar();
       }
     });
@@ -248,14 +284,29 @@ async function iniciar() {
   }
 
   sock.ev.on('messages.upsert', (upsert) => {
-    if (upsert.type !== 'notify') return;
     const estado = estadoAtual();
     for (const msg of upsert.messages) {
       const jid = msg.key.remoteJid;
-      if (!jid || !jid.includes('@g.us')) continue; // só grupos
+      if (!jid) continue;
+
+      const textoMsg = extrairTexto(msg);
+      const texto = textoMsg.trim().toLowerCase();
+      const jidProprioAtual = jidProprio();
+      const ehProprio = jid === jidProprioAtual || jid.endsWith('@lid') === (jidProprioAtual || '').endsWith('@lid') && !jid.includes('@g.us') && !jid.includes('@broadcast');
+
+      log(`📥 msg [${upsert.type}] de ${jid}${ehProprio ? ' (proprio)' : ''}: "${texto.slice(0, 40) || '(sem texto)'}"`);
+
+      // Comando sob demanda: "resumo" em qualquer conversa
+      if (texto === 'resumo' || texto === '/resumo') {
+        log('🧠 Resumo sob demanda solicitado.');
+        enviarResumos(estado, estado.ultimoResumo || 0);
+      }
+
+      if (upsert.type !== 'notify') continue;
+      if (!jid.includes('@g.us')) continue; // sÃ³ grupos
 
       let nome = nomesGrupos[jid] || null;
-      // atualiza nome do grupo quando houver alteração de título
+      // atualiza nome do grupo quando houver alteraÃ§Ã£o de tÃ­tulo
       const proto = msg.message?.protocolMessage;
       if (proto && proto.type === 3 && proto.subject) {
         nome = proto.subject;
@@ -283,3 +334,4 @@ async function iniciar() {
 }
 
 iniciar();
+
