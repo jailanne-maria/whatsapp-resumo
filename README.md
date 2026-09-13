@@ -13,11 +13,32 @@ Bot que acompanha grupos do WhatsApp e envia resumos automáticos para "Mensagen
 
 - 📊 Estatísticas: total de mensagens, participantes, mais ativos, pico de atividade
 - 🔥 Tópicos que marcaram o período (urgências, problemas, prazos, reuniões…)
-- 🔗 Links compartilhados
+- 🔗 Links compartilhados (com quem enviou)
 - ⭐ Mensagens com muita reação
 - 💬 Mensagens longas que valem a pena ler
 
-O resumo é feito **por regras** (sem API externa) — identifica palavras-chave e contextos, priorizando o que importa.
+O resumo funciona de **duas formas**:
+
+1. **Por regras** (padrão) — identifica palavras-chave e contextos, sem depender de internet.
+2. **Com IA** (opcional) — um modelo de linguagem lê as mensagens e escreve um resumo natural,
+   destacando decisões, tarefas, prazos e perguntas sem resposta.
+
+### Ativar o resumo com IA (grátis)
+
+1. Pegue uma chave gratuita em **https://aistudio.google.com/apikey**
+2. No `config.js`, preencha:
+
+```js
+ia: {
+  ativa: true,
+  provedor: "gemini",
+  apiKey: "SUA_CHAVE_AQUI",
+  modelo: "gemini-2.0-flash",
+  maxMensagens: 200,
+},
+```
+
+Sem chave, o bot continua usando o resumo por regras (sem custo).
 
 ## Como usar
 
@@ -36,6 +57,11 @@ npm start
 3. Escaneie o QR Code com seu WhatsApp (Aparelhos conectados > Conectar aparelho)
 
 4. Pronto! Os resumos chegam em "Mensagens salvas" às 7h e 19h (configurável).
+
+## 📱 Rodar no celular (sem notebook)
+
+Dá para rodar o bot direto no Android, 24h por dia, usando o **Termux**.
+Veja o passo a passo em **[RODAR-NO-CELULAR.md](RODAR-NO-CELULAR.md)**.
 
 ## Configuração
 

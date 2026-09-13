@@ -12,8 +12,9 @@ const fs = require('fs');
 const config = require('./config');
 const store = require('./store');
 const { resumirGrupo } = require('./resumidor');
+const { resumirComIA } = require('./resumidor-ia');
 
-// Log em arquivo para depuraÃ§Ã£o
+// Log em arquivo para depuração
 const LOGFILE = 'bot.log';
 function log(msg) {
   const linha = `[${new Date().toISOString()}] ${msg}`;
@@ -138,43 +139,49 @@ async function enviarResumos(estado, marco) {
   if (!sock) return;
   const destino = jidProprio();
   if (!destino) {
-    console.log('âš ï¸  Ainda sem jid prÃ³prio, resumo adiado.');
+    log('⚠️  Ainda sem jid próprio, resumo adiado.');
     return;
   }
 
   const grupos = Object.entries(estado.grupos);
   const blocos = [];
+  const usarIA = !!(config.ia && config.ia.ativa && config.ia.apiKey);
 
   for (const [jid, grupo] of grupos) {
     const mensagens = grupo.mensagens.filter((m) => m.t > marco);
     if (!mensagens.length) continue;
     if (config.gruposPermitidos.length && !config.gruposPermitidos.includes(grupo.nome)) continue;
 
-    const resumo = resumirGrupo(
-      grupo.nome || jid,
-      mensagens,
-      formatarPeriodo(marco, Date.now())
-    );
+    const periodo = formatarPeriodo(marco, Date.now());
+    let resumo = null;
+
+    if (usarIA) {
+      log(`🤖 Gerando resumo com IA: ${grupo.nome || jid}...`);
+      resumo = await resumirComIA(grupo.nome || jid, mensagens, periodo, config.ia);
+    }
+    if (!resumo) {
+      resumo = resumirGrupo(grupo.nome || jid, mensagens, periodo);
+    }
     if (resumo) blocos.push(resumo);
   }
 
   if (!blocos.length) {
-    log('Nenhum resumo gerado (sem atividade). Enviando confirmaÃ§Ã£o.');
+    log('Nenhum resumo gerado (sem atividade). Enviando confirmação.');
     try {
       await sock.sendMessage(destino, {
-        text: 'ðŸ§  *RESUMO*\n\nNenhuma atividade registrada nos grupos ainda. O bot estÃ¡ ouvindo! âœ…\n\nMande "resumo" a qualquer momento para ver o que foi capturado.',
+        text: '🧠 *RESUMO*\n\nNenhuma atividade registrada nos grupos ainda. O bot está ouvindo! ✅\n\nMande "resumo" a qualquer momento para ver o que foi capturado.',
       });
-      log('ConfirmaÃ§Ã£o enviada para Mensagens salvas.');
+      log('Confirmação enviada para Mensagens salvas.');
     } catch (e) {
-      console.error('Falha ao enviar confirmaÃ§Ã£o:', e.message);
+      console.error('Falha ao enviar confirmação:', e.message);
     }
     return;
   }
 
-  const texto = `ðŸ§  *RESUMO DOS GRUPOS*\n\n` + blocos.join('\n\nâ€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”\n\n');
+  const texto = `🧠 *RESUMO DOS GRUPOS*\n\n` + blocos.join('\n\n————————————\n\n');
   try {
     await sock.sendMessage(destino, { text: texto });
-    log(`ðŸ“¨ Resumo enviado (${blocos.length} grupo(s)) Ã s ${formatarHora(Date.now())}`);
+    log(`📨 Resumo enviado (${blocos.length} grupo(s)) às ${formatarHora(Date.now())}`);
   } catch (e) {
     console.error('Falha ao enviar resumo:', e.message);
   }

@@ -2,5 +2,6 @@ node_modules/
 auth/
 data/
 bot.lock
+bot.lock.*
 *.log
 .env
