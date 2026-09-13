@@ -4,12 +4,33 @@ Com o **Termux** (Android), o bot roda direto no celular, 24h por dia — sem de
 
 ---
 
-## 1. Instale o Termux
+## ⚡ Jeito mais rápido (1 comando)
+
+1. Instale o **Termux** pelo **F-Droid**: https://f-droid.org/packages/com.termux/
+   (⚠️ evite a versão da Play Store, que é desatualizada)
+
+2. Abra o Termux, copie e cole **esta linha inteira** e dê Enter:
+
+```bash
+pkg update -y && pkg upgrade -y && pkg install -y nodejs git && cd ~ && git clone https://github.com/jailanne-maria/whatsapp-resumo.git && cd whatsapp-resumo && npm install && termux-wake-lock && node index.js
+```
+
+3. Vai aparecer um **QR Code** → abra o WhatsApp → **Aparelhos conectados** → **Conectar um aparelho** → escaneie.
+
+Pronto! O bot fica rodando no celular. ✅
+
+> Para ativar o **resumo com IA**, veja a seção 4 abaixo (é opcional).
+
+---
+
+## 📖 Passo a passo detalhado (se preferir ir com calma)
+
+### 1. Instale o Termux
 
 - Baixe pelo **F-Droid** (versão atualizada): https://f-droid.org/packages/com.termux/
 - ⚠️ Evite a versão da Play Store (desatualizada).
 
-## 2. Prepare o ambiente
+### 2. Prepare o ambiente
 
 Abra o Termux e cole (uma linha por vez):
 
@@ -18,7 +39,7 @@ pkg update -y && pkg upgrade -y
 pkg install -y nodejs git
 ```
 
-## 3. Baixe o projeto
+### 3. Baixe o projeto
 
 ```bash
 git clone https://github.com/jailanne-maria/whatsapp-resumo.git
