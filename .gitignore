@@ -3,5 +3,6 @@ auth/
 data/
 bot.lock
 bot.lock.*
+config.local.js
 *.log
 .env

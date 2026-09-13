@@ -28,25 +28,27 @@ npm install
 
 ## 4. Configure a IA (opcional)
 
-Pegue uma chave gratuita em **https://aistudio.google.com/apikey** e edite o config:
+Pegue uma chave gratuita em **https://aistudio.google.com/apikey** e crie o arquivo local:
 
 ```bash
-nano config.js
+nano config.local.js
 ```
 
-Em `ia`, mude para:
+Cole:
 
 ```js
-ia: {
-  ativa: true,
-  provedor: "gemini",
-  apiKey: "COLE_SUA_CHAVE_AQUI",
-  modelo: "gemini-2.0-flash",
-  maxMensagens: 200,
-},
+module.exports = {
+  ia: {
+    ativa: true,
+    apiKey: "COLE_SUA_CHAVE_AQUI",
+    modelo: "gemini-3.6-flash",
+  },
+};
 ```
 
 Salve com `Ctrl+O` → Enter → `Ctrl+X`.
+
+> A chave fica em `config.local.js`, que **não vai para o GitHub** (está no `.gitignore`).
 
 ## 5. Rode o bot
 

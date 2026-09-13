@@ -26,19 +26,20 @@ O resumo funciona de **duas formas**:
 ### Ativar o resumo com IA (grátis)
 
 1. Pegue uma chave gratuita em **https://aistudio.google.com/apikey**
-2. No `config.js`, preencha:
+2. Crie um arquivo **`config.local.js`** (não vai para o Git) com:
 
 ```js
-ia: {
-  ativa: true,
-  provedor: "gemini",
-  apiKey: "SUA_CHAVE_AQUI",
-  modelo: "gemini-2.0-flash",
-  maxMensagens: 200,
-},
+module.exports = {
+  ia: {
+    ativa: true,
+    apiKey: "SUA_CHAVE_AQUI",
+    modelo: "gemini-3.6-flash",
+  },
+};
 ```
 
-Sem chave, o bot continua usando o resumo por regras (sem custo).
+> Também funciona pela variável de ambiente `GEMINI_API_KEY`.
+> Sem chave, o bot continua usando o resumo por regras (sem custo).
 
 ## Como usar
 

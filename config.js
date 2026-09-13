@@ -1,4 +1,4 @@
-module.exports = {
+const base = {
   // Horários do resumo (manhã e noite)
   horariosResumo: [
     { hora: 7, minuto: 0 },
@@ -15,13 +15,27 @@ module.exports = {
   maxMensagensPorGrupo: 3000,
 
   // ===== Resumo com IA (opcional) =====
-  // Para ativar: pegue uma chave GRATUITA em https://aistudio.google.com/apikey
-  // e cole em apiKey. Enquanto estiver vazia, o bot usa o resumo por regras.
+  // A chave NÃO fica aqui (o repositório é público).
+  // Coloque a chave em config.local.js (não versionado) ou na variável GEMINI_API_KEY.
   ia: {
     ativa: false,
     provedor: "gemini",          // "gemini" (grátis) ou "openai" (compatível)
     apiKey: "",
-    modelo: "gemini-2.0-flash",
+    modelo: "gemini-3.6-flash",
     maxMensagens: 200,           // quantas mensagens enviar para a IA
   },
 };
+
+// Carrega a chave de config.local.js (arquivo local, fora do Git)
+try {
+  const local = require('./config.local');
+  if (local && local.ia) Object.assign(base.ia, local.ia);
+} catch (_) {}
+
+// Ou de uma variável de ambiente
+if (!base.ia.apiKey && process.env.GEMINI_API_KEY) {
+  base.ia.apiKey = process.env.GEMINI_API_KEY;
+  base.ia.ativa = true;
+}
+
+module.exports = base;

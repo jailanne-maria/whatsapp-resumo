@@ -37,7 +37,7 @@ async function chamarGemini(cfg, prompt) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: PROMPT_SISTEMA }] },
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 900 },
+      generationConfig: { temperature: 0.4, maxOutputTokens: 3000 },
     }),
   });
   if (!resp.ok) {
